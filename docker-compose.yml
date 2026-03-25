@@ -1,0 +1,71 @@
+﻿services:
+  rmqnamesrv:
+    image: apache/rocketmq:5.3.2
+    container_name: rmqnamesrv
+    user: root
+    restart: unless-stopped
+    ports:
+      - "9876:9876"
+    volumes:
+      - rmq_namesrv_logs:/home/rocketmq/logs
+    command:
+      - nameserver
+    networks:
+      - rocketmq
+
+  rmqbroker:
+    image: apache/rocketmq:5.3.2
+    container_name: rmqbroker
+    user: root
+    restart: unless-stopped
+    depends_on:
+      - rmqnamesrv
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      NAMESRV_ADDR: rmqnamesrv:9876
+      JAVA_OPT_EXT: "-server -Xms256m -Xmx256m -Xmn128m"
+    volumes:
+      - rmq_broker_logs:/home/rocketmq/logs
+      - rmq_broker_store:/home/rocketmq/store
+      - ./docker/rocketmq/broker.conf:/home/rocketmq/rocketmq-5.3.2/conf/broker.conf:ro
+    command:
+      - broker
+      - --enable-proxy
+      - -c
+      - /home/rocketmq/rocketmq-5.3.2/conf/broker.conf
+    networks:
+      - rocketmq
+
+  rmq-topic-init:
+    image: apache/rocketmq:5.3.2
+    container_name: rmq-topic-init
+    user: root
+    depends_on:
+      - rmqbroker
+    restart: "no"
+    environment:
+      NAMESRV_ADDR: rmqnamesrv:9876
+      SECKILL_TOPIC: joylocal-seckill-order
+      TIMEOUT_TOPIC: joylocal-order-timeout
+      CLUSTER_NAME: DefaultCluster
+    volumes:
+      - ./docker/rocketmq/init-topics.sh:/opt/rocketmq/init-topics.sh:ro
+    command:
+      - sh
+      - /opt/rocketmq/init-topics.sh
+    networks:
+      - rocketmq
+
+networks:
+  rocketmq:
+    driver: bridge
+
+volumes:
+  rmq_namesrv_logs:
+  rmq_broker_logs:
+  rmq_broker_store:

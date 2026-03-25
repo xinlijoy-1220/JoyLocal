@@ -51,3 +51,14 @@ spring:
     port: 6379
 rocketmq:
   name-server: YOUR_IP:9876
+
+## Seckill MQ Flow
+
+- `POST /voucher-order/seckill/{id}` only completes Redis eligibility check and pushes a RocketMQ order-create message, so the core request path stays lightweight under traffic spikes.
+- `SeckillOrderConsumer` consumes the create message asynchronously, deducts DB stock, persists an unpaid order, and then emits a native delayed timeout message.
+- `OrderTimeoutConsumer` checks the order 15 minutes later. If it is still unpaid, it cancels the order and rolls back both DB stock and Redis reservation.
+
+## RocketMQ Notes
+
+- This implementation uses RocketMQ native timed delivery (`syncSendDeliverTimeMills`) for the 15-minute order timeout, so it should run against RocketMQ 5.0+.
+- Create the timeout topic as a `DELAY` topic and the seckill topic as a `NORMAL` topic before running the application.

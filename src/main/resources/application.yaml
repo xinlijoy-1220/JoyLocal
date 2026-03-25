@@ -1,32 +1,35 @@
-  server:
-    port: 8081
-  spring:
-    rabbitmq:
-      host: localhost
-      port: 5672
-      username: guest
-      password: guest
-    application:
-      name: joylocal
-    datasource:
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://127.0.0.1:3306/dingping?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      username: root
-      password: 161226
-    redis:
-      host: 127.0.0.1
-      port: 6379
+server:
+  port: 8082
 
-      lettuce:
-        pool:
-          max-active: 30
-          max-idle: 15
-          min-idle: 5
-          time-between-eviction-runs: 10s
-    jackson:
-      default-property-inclusion: non_null # JSON处理时忽略非空字段
-  mybatis-plus:
-    type-aliases-package: com.joylocal.entity # 别名扫描包
-  logging:
-    level:
-      com.joylocal: debug
+spring:
+  application:
+    name: joylocal
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/dingping?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 161226
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    lettuce:
+      pool:
+        max-active: 30
+        max-idle: 15
+        min-idle: 5
+        time-between-eviction-runs: 10s
+  jackson:
+    default-property-inclusion: non_null
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: joylocal-producer-group
+    send-message-timeout: 3000
+
+mybatis-plus:
+  type-aliases-package: com.joylocal.entity
+
+logging:
+  level:
+    com.joylocal: debug
